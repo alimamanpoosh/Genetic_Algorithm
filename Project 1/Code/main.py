@@ -2,10 +2,13 @@ import numpy as np
 
 # Define the problem parameters
 num_neighborhoods = 400
-min_speed = 0.2  # megabytes
+min_speed = 0.2  # megabit
+list_speed = [0.2, 1, 3]
 max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
+
+
 
 
 def calculate_population():  # This function calculates the total population of the neighborhood
