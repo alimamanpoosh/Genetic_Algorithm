@@ -3,15 +3,16 @@ import numpy as np
 # Define the problem parameters
 num_neighborhoods = 400
 min_speed = 0.2  # megabit
-list_speed = [0.2, 1, 3]
+list_speed = [0, 0.2, 1, 3] 
+Satisfactionـscore = [0,10,20,40]
 max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
 
 
 
-
-def calculate_population():  # This function calculates the total population of the neighborhood
+# This function calculates the total population of the neighborhood
+def calculate_population():  
     with open('blocks_population.txt') as f:
         lines = f.read().splitlines()
 
@@ -23,10 +24,6 @@ def calculate_population():  # This function calculates the total population of 
     totalPopulation = np.sum(result)
     return totalPopulation
 
-
-totalPopulationCity = calculate_population()
-
-
 # Define the chromosome representation
 def create_chromosome():
     return np.random.randint(2, size=num_neighborhoods)
@@ -36,10 +33,17 @@ def create_chromosome():
 def fitness_function(chromosome):
     # Calculate the cost and speed of the solution
     cost = np.sum(chromosome) * max_cost / num_neighborhoods
-    speed = np.sum(chromosome) * min_speed
+    # speed = np.sum(chromosome) * min_speed
+
+    for i in list_speed:
+        speed = np.sum(chromosome) * list_speed[i]
+
 
     # Calculate the fitness as a weighted sum of cost and speed
-    fitness = cost_weights * cost + speed_weights * speed
+    fitness = cost_weights * cost + speed_weights * speed[0]
+    for i in range(len(list_speed)):
+        temp = cost_weights * cost + speed_weights * speed[i]
+        fitness = min(temp, fitness)
 
     return fitness
 
@@ -48,11 +52,11 @@ def fitness_function(chromosome):
 def mutation(chromosome, mutation_rate=0.01):
     for i in range(len(chromosome)):
         if np.random.random() < mutation_rate:
-            chromosome[i] = 1 - chromosome[i]  # flip the bit
+            chromosome[i] = 1 - chromosome[i]  # flip the bit  1==> 0 and 0==>1
     return chromosome
 
 
-def crossover(parent1, parent2):
+def crossover(parent1, parent2): #genrate offspring from parent
     crossover_point = np.random.randint(len(parent1))
     offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
     offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
@@ -60,7 +64,8 @@ def crossover(parent1, parent2):
 
 
 # Implement the evolutionary algorithm
-population_size = 100
+# population_size = 100
+population_size = calculate_population()
 mutation_rate = 0.01
 num_generations = 100
 
