@@ -11,6 +11,16 @@ cost_weights = 0.8
 
 
 
+def nominal_bandwidth():
+    pass
+
+def cov():
+    pass
+
+def real_bandwidth():
+    pass
+
+
 # This function calculates the total population of the neighborhood
 def calculate_population():  
     with open('blocks_population.txt') as f:
