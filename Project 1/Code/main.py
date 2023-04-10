@@ -1,5 +1,5 @@
 import numpy as np
-
+import random
 # Define the problem parameters
 num_neighborhoods = 400
 min_speed = 0.2  # megabit
@@ -9,16 +9,31 @@ max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
 
+# def read problem_config.json file and save in the dictionary
 
 
-def nominal_bandwidth():
-    pass
 
-def cov():
-    pass
 
-def real_bandwidth():
-    pass
+def nominal_bandwidth(Bw_ty, bj, blocks):
+    return Bw_ty * bj / sum(blocks)
+    
+
+def COV(x,y):
+    sigma_inverted = [[1/8, 0], [0, 1/8]]
+
+    X = np.array(x)
+    Y = np.array(y)
+
+    subtract = np.subtract(X, Y)
+
+    return np.exp(-0.5*(subtract) * sigma_inverted * np.transpose(subtract))
+    
+
+def real_bandwidth(Bw_ty, bj, blocks, x, y):
+    bw_prime = nominal_bandwidth(Bw_ty, bj, blocks)
+    cov = COV(x, y)
+    return cov * bw_prime
+
 
 
 # This function calculates the total population of the neighborhood
@@ -35,8 +50,23 @@ def calculate_population():
     return totalPopulation
 
 # Define the chromosome representation
-def create_chromosome():
-    return np.random.randint(2, size=num_neighborhoods)
+def create_chromosome(num_gene, num_lists):
+    param1_range = range(0, 400)  # address each tower
+    param2_range = range(1, 400)  # The number of each neighborhood
+    param3_range = range(1, 6)  # bandwidth each tower  #  min_BW = 0.2 * 191932.0 = 38386.4 Max_BW = 3 * 191932.0 = 57589.6
+    
+    # num_lists = 5 # Define the number of internal lists you want to create
+    chromosome = []
+    for i in range(num_lists):
+        internal_list = [random.choice(param1_range),
+                         random.choice(param2_range),
+                         random.choice(param3_range)]
+        chromosome.append(internal_list)
+    return chromosome
+    
+
+    
+        
 
 
 # Define the fitness function
@@ -95,3 +125,13 @@ for generation in range(num_generations):
     offspring2 = mutation(offspring2, mutation_rate)
 
     # Replace the least fit individuals with the offspring
+
+
+for i in range(random.randint(1, 100)):
+    for j in range(50):
+        create_chromosome()
+        Num_gene = random.randint(1, 40)
+        chromosome = []
+        for i in 
+        
+
