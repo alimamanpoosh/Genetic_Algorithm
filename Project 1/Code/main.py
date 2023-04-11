@@ -49,23 +49,26 @@ def calculate_population():
     totalPopulation = np.sum(result)
     return totalPopulation
 
+
 # Define the chromosome representation
-def create_chromosome(num_gene, num_lists):
+def create_chromosome(num_gene):
     param1_range = range(0, 400)  # address each tower
     param2_range = range(1, 400)  # The number of each neighborhood
     param3_range = range(1, 6)  # bandwidth each tower  #  min_BW = 0.2 * 191932.0 = 38386.4 Max_BW = 3 * 191932.0 = 57589.6
     
-    # num_lists = 5 # Define the number of internal lists you want to create
+    # num_gene = 5 # Define the number of internal lists you want to create
     chromosome = []
-    for i in range(num_lists):
+    for i in range(num_gene):
         internal_list = [random.choice(param1_range),
                          random.choice(param2_range),
                          random.choice(param3_range)]
         chromosome.append(internal_list)
     return chromosome
-    
 
-    
+def create_location_tower(num_gene):
+    pass
+
+
         
 
 
@@ -103,6 +106,35 @@ def crossover(parent1, parent2): #genrate offspring from parent
     return offspring1, offspring2
 
 
+# use https://towardsdatascience.com/genetic-algorithm-implementation-in-python-5ab67bb124a6
+def crossover_blend_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
+    """Perform crossover blend on two decimal numbers."""
+    # Determine the blending point
+    blend_point = random.uniform(0, 1)
+    # Blend the parent values to create the offspring value
+    offspring = alpha * parent1 + (1 - alpha) * parent2
+    # Apply the blending factor to the offspring value
+    offspring = (1 - blend_point) * parent1 + blend_point * offspring 
+    return offspring
+
+def crossover_blend_Blocks(parent1, parent2, alpha=0.25): # list type
+    pass 
+def crossover_blend_tower(parent1, parent2, alpha=0.25):  # tuple type
+    pass
+    # such as cross over blend but use for x1, y1   x2,y2 
+    # parent1 = [x1,y2]
+    # parent2 = [x2,y2]
+
+
+def mutation_blend_BW():
+    pass
+
+def mutation_blend_Blocks():
+    pass
+
+def mutation_blend_tower():
+    pass
+
 # Implement the evolutionary algorithm
 # population_size = 100
 population_size = calculate_population()
@@ -126,12 +158,11 @@ for generation in range(num_generations):
 
     # Replace the least fit individuals with the offspring
 
+numberOfTowers = random.randint(1, 40) # first time we use random tower number
 
 for i in range(random.randint(1, 100)):
     for j in range(50):
-        create_chromosome()
-        Num_gene = random.randint(1, 40)
-        chromosome = []
-        for i in 
-        
+        chromosome = create_chromosome(random.randint(1, 40))      
+        fitness = fitness_function(chromosome)
+        print(fitness)
 
