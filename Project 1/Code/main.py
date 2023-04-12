@@ -32,7 +32,10 @@ def COV(x,y):
 def real_bandwidth(Bw_ty, bj, blocks, x, y):
     bw_prime = nominal_bandwidth(Bw_ty, bj, blocks)
     cov = COV(x, y)
-    return cov * bw_prime
+    return cov * bw_prime 
+
+# max num in list
+
 
 
 
@@ -51,22 +54,44 @@ def calculate_population():
 
 
 # Define the chromosome representation
-def create_chromosome(num_gene):
-    param1_range = range(0, 400)  # address each tower
-    param2_range = range(1, 400)  # The number of each neighborhood
-    param3_range = range(1, 6)  # bandwidth each tower  #  min_BW = 0.2 * 191932.0 = 38386.4 Max_BW = 3 * 191932.0 = 57589.6
-    
-    # num_gene = 5 # Define the number of internal lists you want to create
-    chromosome = []
+def create_chromosome_Type(num_gene):
+
+    result_list = []
     for i in range(num_gene):
-        internal_list = [random.choice(param1_range),
-                         random.choice(param2_range),
-                         random.choice(param3_range)]
-        chromosome.append(internal_list)
-    return chromosome
+    # Generate first parameter: tuple of integer and float multiple of 0.5, between 0.5 and 20   
+    # Generate first paramete     ====>    # address each tower
+
+
+    int_param = random.randint(1, 40) * 0.5
+    float_param = random.uniform(0, 39.5) * 0.5 + 0.5
+    first_param = (int_param, float_param)
+
+    # Generate second parameter: list of integers, between 1 and 400, with random length
+    # Generate second parameter:   ====> # The number of each neighborhood
+
+
+    # second_param_len = random.randint(1, 400)   
+    second_param_len = 5 # number of tower = 400 / num_nigbor   
+    second_param = [random.randint(1, 400) for _ in range(second_param_len)]
+
+
+
+    # Generate third parameter: decimal number, randomly selected from a list of possible values
+    # Generate third parameter:    ====>  # bandwidth each tower  #  min_BW = 0.2 * 191932.0 = 38386.4 Max_BW = 3 * 191932.0 = 57589.6
+
+    third_param_choices = [0.1, 0.2, 0.5, 1.0]
+    third_param = random.choice(third_param_choices)
+    and_num = random.uniform(10, 200)
+
+    # Append sublist to result list
+    return result_list
+
+
+
 
 def create_location_tower(num_gene):
     pass
+
 
 
         
