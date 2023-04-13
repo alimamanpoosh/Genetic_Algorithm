@@ -21,7 +21,7 @@ import numpy as np
 result_list = []
 for i in range(2):
     # Generate first parameter: tuple of integer and float multiple of 0.5, between 0.5 and 20
-    int_param = random.randint(1, 10) * 0.5
+    int_param = random.uniform(1, 10) * 0.5
     float_param = random.uniform(0, 12.5) * 0.5 + 0.5
     first_param = (int_param, float_param)
 
@@ -30,7 +30,7 @@ for i in range(2):
     second_param = [random.randint(1, 50) for _ in range(5)]
 
     # Generate third parameter: decimal number, randomly selected from a list of possible values
-    third_param_choices = [0.1, 0.2, 0.5, 1.0]
+    third_param_choices = [0.1, 0.2, 0.5, 1.0] 
     third_param = random.choice(third_param_choices)
     and_num = random.uniform(10, 200)
 

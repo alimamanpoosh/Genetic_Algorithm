@@ -54,7 +54,7 @@ def calculate_population():
 
 
 # Define the chromosome representation
-def create_chromosome_Type(num_gene):
+def create_chromosome(num_gene):
 
     result_list = []
     for i in range(num_gene):
@@ -62,8 +62,8 @@ def create_chromosome_Type(num_gene):
     # Generate first paramete     ====>    # address each tower
 
 
-    int_param = random.randint(1, 40) * 0.5
-    float_param = random.uniform(0, 39.5) * 0.5 + 0.5
+    int_param = random.uniform(1, 40) + 0.5
+    float_param = random.uniform(0, 39.5) + 0.5
     first_param = (int_param, float_param)
 
     # Generate second parameter: list of integers, between 1 and 400, with random length
@@ -79,7 +79,7 @@ def create_chromosome_Type(num_gene):
     # Generate third parameter: decimal number, randomly selected from a list of possible values
     # Generate third parameter:    ====>  # bandwidth each tower  #  min_BW = 0.2 * 191932.0 = 38386.4 Max_BW = 3 * 191932.0 = 57589.6
 
-    third_param_choices = [0.1, 0.2, 0.5, 1.0]
+    third_param_choices = [0.1, 0.2, 0.5, 1.0] 
     third_param = random.choice(third_param_choices)
     and_num = random.uniform(10, 200)
 
@@ -124,12 +124,6 @@ def mutation(chromosome, mutation_rate=0.01):
     return chromosome
 
 
-def crossover(parent1, parent2): #genrate offspring from parent
-    crossover_point = np.random.randint(len(parent1))
-    offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
-    offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-    return offspring1, offspring2
-
 
 # use https://towardsdatascience.com/genetic-algorithm-implementation-in-python-5ab67bb124a6
 def crossover_blend_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
@@ -143,13 +137,44 @@ def crossover_blend_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
     return offspring
 
 def crossover_blend_Blocks(parent1, parent2, alpha=0.25): # list type
-    pass 
-def crossover_blend_tower(parent1, parent2, alpha=0.25):  # tuple type
-    pass
-    # such as cross over blend but use for x1, y1   x2,y2 
-    # parent1 = [x1,y2]
-    # parent2 = [x2,y2]
+    crossover_point = np.random.randint(len(parent1))
+    offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    return offspring1, offspring2
 
+
+def crossover_blend_tower(parent1, parent2, alpha=0.25):  # tuple type
+    parent1 = list(parent1)
+    parent2 = list(parent2)
+    sub = abs(parent1[0] - parent2[0])
+    amount_of_change = alpha * sub
+    
+    if parent2[0] < parent1[0]:
+        parent1[0] -= amount_of_change
+    else:
+        parent1[0] += amount_of_change
+
+    if parent1[0] < parent2[0]:
+        parent2[0] -= amount_of_change
+    else:
+        parent2[0] += amount_of_change
+
+    if parent2[1] < parent1[1]:
+        parent1[1] -= amount_of_change
+    else:
+        parent1[1] += amount_of_change
+   
+    if parent1[1] < parent2[1]:
+        parent2[1] -= amount_of_change
+    else:
+        parent2[1] += amount_of_change
+        
+    offspring1 = (parent1[0], parent1[1])   
+    offspring2 = (parent2[0], parent2[1])
+
+    return offspring1, offspring2
+
+    
 
 def mutation_blend_BW():
     pass
