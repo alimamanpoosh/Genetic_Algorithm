@@ -147,14 +147,28 @@ def fitness(addres_tower, list_neighborhood,bandwidth):
     # extract population of each neighborhood from dict 
     dict_neighborhood , totalPopulation = calculate_population()
     
-
+    real_bandwidth_each_tower = 0
     # feed data in nominal_bandwidth function
     for i in list_neighborhood:
         # nominal_bandwidth_each_tower = nominal_bandwidth(bandwidth, i, list_neighborhood)
         real_bandwidth_each_tower = real_bandwidth(bandwidth, i, list_neighborhood, addres_tower[0], addres_tower[1])
         population_each_neighborhood = dict_neighborhood.get(i)
         bandwidth_each_user = real_bandwidth_each_tower / population_each_neighborhood
+        # Scoring the user satisfaction
+        if bandwidth_each_user < user_satisfaction_levels[0]:
+            user_satisfaction_scores = user_satisfaction_scores[0] * population_each_neighborhood
+        elif bandwidth_each_user < user_satisfaction_levels[1]:
+            user_satisfaction_scores = user_satisfaction_scores[1] * population_each_neighborhood
+        elif bandwidth_each_user < user_satisfaction_levels[2]:
+            user_satisfaction_scores = user_satisfaction_scores[2] * population_each_neighborhood
+        else:
+            user_satisfaction_scores = user_satisfaction_scores[3] * population_each_neighborhood
 
+
+        total_maintanance_cost = real_bandwidth_each_tower * tower_maintanance_cost
+        total_cost = total_maintanance_cost + tower_construction_cost
+
+        final_fitness = user_satisfaction_scores - total_cost
 
 
 # calculate the mb/s each tower 
