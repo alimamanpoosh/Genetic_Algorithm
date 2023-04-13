@@ -15,6 +15,9 @@ cost_weights = 0.8
 
 
 def nominal_bandwidth(Bw_ty, bj, blocks):
+    dict_neighborhood , totalPopulation = calculate_population()
+    blocks_population = [dict_neighborhood.get(key) for key in blocks]
+    bj = dict_neighborhood.get(bj)
     return Bw_ty * bj / sum(blocks)
     
 
@@ -128,6 +131,35 @@ def fitness_function(chromosome):
         fitness = min(temp, fitness)
 
     return fitness
+
+
+def fitness(addres_tower, list_neighborhood,bandwidth):
+    # This code opens a JSON file named 'problem_config.json' and loads its contents into the variable data.
+    with open('problem_config.json') as f:
+        data = json.load(f)
+
+    # The following lines extract specific values from the JSON file using the get method.
+    tower_construction_cost = data.get('tower_construction_cost')
+    tower_maintanance_cost = data.get('tower_maintanance_cost')
+    user_satisfaction_levels = data.get('user_satisfaction_levels')
+    user_satisfaction_scores = data.get('user_satisfaction_scores')
+
+
+    # feed data in nominal_bandwidth function
+    for i in list_neighborhood:
+        nominal_bandwidth(bandwidth, i, list_neighborhood)
+
+
+# calculate the mb/s each tower 
+def calculate_bandwidth(): 
+
+
+
+
+
+
+
+    
 
 
 # Define the genetic operators
