@@ -146,6 +146,8 @@ def fitness(addres_tower, list_neighborhood,bandwidth):
 
     # extract population of each neighborhood from dict 
     dict_neighborhood , totalPopulation = calculate_population()
+
+    # Result of fitness function
     final_fitness = []
     real_bandwidth_each_tower = 0
     # feed data in nominal_bandwidth function
@@ -165,7 +167,8 @@ def fitness(addres_tower, list_neighborhood,bandwidth):
             user_satisfaction_scores = user_satisfaction_scores[3] * population_each_neighborhood
 
 
-        total_maintanance_cost = real_bandwidth_each_tower * tower_maintanance_cost
+        total_maintanance_cost = real_bandwidth_each_tower * tower_maintanance_cost   # i think this line is wrong
+        
         total_cost = total_maintanance_cost + tower_construction_cost
 
         final_fitness.append(user_satisfaction_scores - total_cost)
