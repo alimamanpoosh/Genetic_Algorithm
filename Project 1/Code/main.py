@@ -50,7 +50,24 @@ def calculate_population():
 
     result = np.array(neighborPopulation, dtype=int)
     totalPopulation = np.sum(result)
-    return totalPopulation
+    dict_neighborhood = {}
+    for i in range(400):
+        dict_neighborhood[i] = result[i]
+    return dict_neighborhood, totalPopulation
+
+dict_neighborhood , totalPopulation = calculate_population()
+
+# read file and save in the dictionary with key = neighborhood number and value = population of neighborhood
+def read_population():
+    with open('blocks_population.txt') as f:
+        lines = f.read().splitlines()
+
+    neighborPopulation = []
+    for i in lines:
+        neighborPopulation.extend(i.split(','))
+
+    result = np.array(neighborPopulation, dtype=int)
+    return result
 
 
 # Define the chromosome representation
@@ -91,10 +108,7 @@ def create_chromosome(num_gene):
 
 def create_location_tower(num_gene):
     pass
-
-
-
-        
+   
 
 
 # Define the fitness function
@@ -147,27 +161,23 @@ def crossover_blend_tower(parent1, parent2, alpha=0.25):  # tuple type
     parent1 = list(parent1)
     parent2 = list(parent2)
     sub = abs(parent1[0] - parent2[0])
-    amount_of_change = alpha * sub
+    amount_of_change_x = alpha * sub
+    amount_of_change_y = alpha * abs(parent1[1] - parent2[1])
     
     if parent2[0] < parent1[0]:
-        parent1[0] -= amount_of_change
+        parent1[0] -= amount_of_change_x
+        parent2[0] += amount_of_change_x
     else:
-        parent1[0] += amount_of_change
-
-    if parent1[0] < parent2[0]:
-        parent2[0] -= amount_of_change
-    else:
-        parent2[0] += amount_of_change
+        parent1[0] += amount_of_change_x
+        parent2[0] -= amount_of_change_x
 
     if parent2[1] < parent1[1]:
-        parent1[1] -= amount_of_change
+        parent1[1] -= amount_of_change_y
+        parent2[1] += amount_of_change_y
     else:
-        parent1[1] += amount_of_change
-   
-    if parent1[1] < parent2[1]:
-        parent2[1] -= amount_of_change
-    else:
-        parent2[1] += amount_of_change
+        parent1[1] += amount_of_change_y
+        parent2[1] -= amount_of_change_y
+        
         
     offspring1 = (parent1[0], parent1[1])   
     offspring2 = (parent2[0], parent2[1])
@@ -176,14 +186,26 @@ def crossover_blend_tower(parent1, parent2, alpha=0.25):  # tuple type
 
     
 
-def mutation_blend_BW():
-    pass
+def mutation_blend_BW(parent1):  # parent decimal number
+    dict_neighborhood, totalPopulation = calculate_population()
+    Multi_neighborhood_population = sum([dict_neighborhood.get(key)] for key in parent1) 
 
-def mutation_blend_Blocks():
-    pass
+    return random.uniform(0.2 * Multi_neighborhood_population, 3 * Multi_neighborhood_population)
+
+
+def mutation_blend_Blocks(parent1, parent2):  # parent is type list
+
+    x_swap = parent1[random.randint(0, len(obj)-1)]
+    y_swap = parent2[random.randint(0, len(obj)-1)]
+
+    x_swap ,y_swap = y_swap, x_swap
+
+    return parent1, parent2
+
+
 
 def mutation_blend_tower():
-    pass
+    return (random.uniform(parent1[0]-1, parent1[0]+1), random.uniform(parent1[1]-1, parent1[1]+1))
 
 # Implement the evolutionary algorithm
 # population_size = 100
