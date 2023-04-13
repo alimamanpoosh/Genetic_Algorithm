@@ -22,15 +22,15 @@ def nominal_bandwidth(Bw_ty, bj, blocks):
     
 
 def COV(x,y):
-    sigma_inverted = [[1/8, 0], [0, 1/8]]
+    sigma_inverted = np.array([[1/8, 0], [0, 1/8]])
 
     X = np.array(x)
     Y = np.array(y)
 
     subtract = np.subtract(X, Y)
 
-    return np.exp(-0.5*(subtract) * sigma_inverted * np.transpose(subtract))
-    
+    return np.exp(-0.5*(subtract) @ sigma_inverted @ np.transpose(subtract))
+  
 
 def real_bandwidth(Bw_ty, bj, blocks, x, y):
     bw_prime = nominal_bandwidth(Bw_ty, bj, blocks)
@@ -147,7 +147,8 @@ def fitness(addres_tower, list_neighborhood,bandwidth):
 
     # feed data in nominal_bandwidth function
     for i in list_neighborhood:
-        nominal_bandwidth(bandwidth, i, list_neighborhood)
+        # nominal_bandwidth_each_tower = nominal_bandwidth(bandwidth, i, list_neighborhood)
+        real_bandwidth_each_tower = real_bandwidth(bandwidth, i, list_neighborhood, addres_tower[0], addres_tower[1])
 
 
 # calculate the mb/s each tower 
