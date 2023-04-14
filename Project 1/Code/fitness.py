@@ -4,6 +4,9 @@ import numpy as np
 totalPopulation = 0
 dict_neighborhood = {}
 
+location='location'
+blocks='blocks'
+BW='BW'
 
 def COV(x,y):
     sigma_inverted = np.array([[1/8, 0], [0, 1/8]])
