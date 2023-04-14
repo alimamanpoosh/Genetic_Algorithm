@@ -178,9 +178,48 @@ def crossover(chro1, chro2, rate=0.9):
     return child1, child2
 
 
+def mutation_BW(parent1):  # parent decimal number
+    Multi_neighborhood_population = sum( [dict_neighborhood.get(key) for key in parent1[blocks]] )
+    sub=3 * Multi_neighborhood_population - 0.2 * Multi_neighborhood_population
+    alpha=0.5
+    return random.uniform(parent1[BW]-alpha*sub,parent1[BW]+alpha*sub)
+
+
+def mutation_Blocks(parent1, parent2):  # parent is type list
+    rand_P1 = random.randint(0, len(parent1)-1)
+    rand_P2 = random.randint(0, len(parent2)-1)
+
+    temp  = parent1[rand_P1]
+    temp2 = parent2[rand_P2]
+    parent1[rand_P1] = temp2
+    parent2[rand_P2] = temp
+
+    return parent1, parent2
+
+
+def mutation_tower(parent1):
+    newx, newy = random.uniform(parent1[0] - 1, parent1[0] + 1), random.uniform(parent1[1] - 1, parent1[1] + 1)
+    if newx<0:
+        newx=0
+    elif newx>400:
+        newx=400
+    if newy<0:
+        newy=0
+    elif newy>400:
+        newy=400;
+    return (newx, newy)
+
 
 # Define the genetic operators
 def mutation(chromosome, mutation_rate=0.1):
+    for gen in chromosome:
+        if random.randint(1,10)==1:
+            rand= random.randint(0,len(chromosome)-1)
+            gen[blocks], chromosome[rand] = mutation_Blocks(gen[blocks], chromosome[rand])
+
+            gen[location]=mutation_tower(gen[location])
+
+            gen[BW]=mutation_BW(gen[BW])
 
 
 
