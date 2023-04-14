@@ -172,7 +172,10 @@ def crossover(chro1, chro2, rate=0.9):
                         g1[blocks][i], g2[blocks][i] = g2[blocks][i], g1[blocks][i]
 
         g1[location], g2[location] = crossover_tower(g1[location], g2[location])
+
         g1[BW], g2[BW] = crossover_BW(g1[BW], g2[BW])
+
+    return child1, child2
 
 
 
