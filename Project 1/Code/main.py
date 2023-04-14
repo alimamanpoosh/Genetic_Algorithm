@@ -164,7 +164,7 @@ def crossover(chro1, chro2, rate=0.9):
     child1, child2 = chro1, chro2
     for g1,g2 in child1[crossover_point:], child2[crossover_point:]:
         rate=0.9
-        g1[blocks], g2[blocks] = crossover_tower(g1[blocks], g2[blocks], rate)
+        g1[blocks], g2[blocks] = crossover_Blocks(g1[blocks], g2[blocks], rate)
         for i in g1[blocks][int(len(g1)*rate):]:
             for gen in child1:
                 for b in gen[blocks]:
@@ -180,11 +180,8 @@ def crossover(chro1, chro2, rate=0.9):
 
 
 # Define the genetic operators
-def mutation(chromosome, mutation_rate=0.01):
-    for i in range(len(chromosome)):
-        if np.random.random() < mutation_rate:
-            chromosome[i] = 1 - chromosome[i]  # flip the bit
-    return chromosome
+def mutation(chromosome, mutation_rate=0.1):
+
 
 
 def genetic_algorithm(numOfTows):
