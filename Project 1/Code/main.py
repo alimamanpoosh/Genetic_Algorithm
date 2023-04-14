@@ -113,19 +113,75 @@ def fitness(chromosome):
     return fit
 
 
+def crossover_Blocks(parent1, parent2, rate=0.9): # list type
+    crossover_point = int(len(parent1)*rate)
+    offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    return offspring1, offspring2
+
+
+
+def crossover_tower(parent1, parent2, alpha=0.25):  # tuple type
+    parent1 = list(parent1)
+    parent2 = list(parent2)
+    sub = abs(parent1[0] - parent2[0])
+    amount_of_change_x = alpha * sub
+    amount_of_change_y = alpha * abs(parent1[1] - parent2[1])
+
+    if parent2[0] < parent1[0]:
+        parent1[0] -= amount_of_change_x
+        parent2[0] += amount_of_change_x
+    else:
+        parent1[0] += amount_of_change_x
+        parent2[0] -= amount_of_change_x
+
+    if parent2[1] < parent1[1]:
+        parent1[1] -= amount_of_change_y
+        parent2[1] += amount_of_change_y
+    else:
+        parent1[1] += amount_of_change_y
+        parent2[1] -= amount_of_change_y
+
+    offspring1 = (parent1[0], parent1[1])
+    offspring2 = (parent2[0], parent2[1])
+
+    return offspring1, offspring2
+
+
+def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
+    # parent1 ===>  gen 1
+    # parent2 ===>  gen 2
+
+    """Perform crossover blend on two decimal numbers."""
+    d = abs(parent1-parent2)
+    if parent2>parent1:
+        return random.uniform(parent1-alpha*d,parent2+alpha*d), random.uniform(parent1-alpha*d,parent2+alpha*d)
+    return random.uniform(parent2 - alpha * d, parent1 + alpha * d), random.uniform(parent2 - alpha * d, parent1 + alpha * d)
+
+
+def crossover(chro1, chro2, rate=0.9):
+    crossover_point=rate*len(chro1)
+    child1, child2 = chro1, chro2
+    for g1,g2 in child1[crossover_point:], child2[crossover_point:]:
+        rate=0.9
+        g1[blocks], g2[blocks] = crossover_tower(g1[blocks], g2[blocks], rate)
+        for i in g1[blocks][int(len(g1)*rate):]:
+            for gen in child1:
+                for b in gen[blocks]:
+                    if b==g1[blocks][i]:
+                        g1[blocks][i], g2[blocks][i] = g2[blocks][i], g1[blocks][i]
+
+        g1[location], g2[location] = crossover_tower(g1[location], g2[location])
+        g1[BW], g2[BW] = crossover_BW(g1[BW], g2[BW])
+
+
+
 # Define the genetic operators
 def mutation(chromosome, mutation_rate=0.01):
     for i in range(len(chromosome)):
         if np.random.random() < mutation_rate:
             chromosome[i] = 1 - chromosome[i]  # flip the bit
     return chromosome
-
-
-def crossover(parent1, parent2):
-    crossover_point = np.random.randint(len(parent1))
-    offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
-    offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-    return offspring1, offspring2
 
 
 def genetic_algorithm(numOfTows):
