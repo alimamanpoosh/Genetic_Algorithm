@@ -1,6 +1,9 @@
 import json
 import numpy as np
 
+totalPopulation = 0
+dict_neighborhood = {}
+
 
 def COV(x,y):
     sigma_inverted = np.array([[1/8, 0], [0, 1/8]])
@@ -24,14 +27,13 @@ def calculate_population():
 
     result = np.array(neighborPopulation, dtype=int)
     totalPopulation = np.sum(result)
-    dict_neighborhood = {}
     for i in range(400):
         dict_neighborhood[i] = result[i]
-    return dict_neighborhood, totalPopulation
+
 
 
 def nominal_bandwidth(Bw_ty, bj, blocks):
-    dict_neighborhood , totalPopulation = calculate_population()
+    # dict_neighborhood , totalPopulation = calculate_population()
     # blocks = dict_neighborhood.get(blocks) for key in blocks
     blocks_population = [dict_neighborhood.get(key) for key in blocks]
     bj = dict_neighborhood.get(bj)
@@ -46,7 +48,7 @@ def fitness(chromosome):
     tower_maintanance_cost = data.get('tower_maintanance_cost')
     user_satisfaction_levels = data.get('user_satisfaction_levels')
     user_satisfaction_scores = data.get('user_satisfaction_scores')
-    tow_blocks, tow_pup = calculate_population()
+    # tow_blocks, tow_pup = calculate_population()
 
     fit=0
     for gen in (chromosome):
@@ -54,7 +56,7 @@ def fitness(chromosome):
         for block in gen[blocks]:
             BW_prime=nominal_bandwidth(gen[BW], block, gen[blocks])
             BW_block=COV(gen[location], block)*BW_prime
-            BW_user=BW_block/tow_blocks[block]
+            BW_user=BW_block/dict_neighborhood[block]
 
             u_score=0
             for i in range(len(user_satisfaction_levels)):
@@ -62,9 +64,9 @@ def fitness(chromosome):
                     u_score=user_satisfaction_scores[i]
                     break
                 if i==2:
-                    u_score=40
+                    u_score=user_satisfaction_scores[3]
 
-            b_score=u_score*tow_blocks[block]
+            b_score=u_score*dict_neighborhood[block]
             cost=tower_construction_cost+tower_maintanance_cost*gen[BW]
 
             total+=(b_score-cost)
