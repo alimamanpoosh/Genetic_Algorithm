@@ -1,4 +1,6 @@
 import numpy as np
+import random
+import json
 
 # Define the problem parameters
 num_neighborhoods = 400
@@ -8,10 +10,16 @@ max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
 
+totalPopulation = 0
+dict_neighborhood = {}
+
+location='location'
+blocks='blocks'
+BW='BW'
 
 
-
-def calculate_population():  # This function calculates the total population of the neighborhood
+  # This function calculates the total population of the neighborhood
+def calculate_population():
     with open('blocks_population.txt') as f:
         lines = f.read().splitlines()
 
@@ -21,27 +29,88 @@ def calculate_population():  # This function calculates the total population of 
 
     result = np.array(neighborPopulation, dtype=int)
     totalPopulation = np.sum(result)
-    return totalPopulation
+    for i in range(400):
+        dict_neighborhood[i] = result[i]
 
-
-totalPopulationCity = calculate_population()
 
 
 # Define the chromosome representation
-def create_chromosome():
-    return np.random.randint(2, size=num_neighborhoods)
+def CreateChromosome(NumOfGens):
+    chromosome=[]
+    n=400/NumOfGens
+    for i in range(NumOfGens):
+        gen=dict()
+
+        x=random.uniform(0,400)
+        y=random.uniform(0,400)
+        gen[location]=(x,y)
+
+        gen[blocks]=[j for j in range(int(i*(n)),int(n*(i+1)))]
+
+        population=0
+        for b in gen[blocks]:
+            population+=dict_neighborhood[b]
+        gen[BW]=random.uniform(0, 3 * population)
+
+        chromosome.append(gen)
+
+    return chromosome
+
+
+def nominal_bandwidth(Bw_ty, bj, blocks):
+    pop=0
+    for b in blocks:
+        pop+=dict_neighborhood[b]
+
+    return dict_neighborhood[bj]*Bw_ty/pop
+
+
+def COV(x,y):
+    sigma_inverted = np.array([[1/8, 0], [0, 1/8]])
+
+    X = np.array(x)
+    Y = np.array(y)
+
+    subtract = np.subtract(X, Y)
+
+    return np.exp(-0.5*(subtract) @ sigma_inverted @ np.transpose(subtract))
 
 
 # Define the fitness function
-def fitness_function(chromosome):
-    # Calculate the cost and speed of the solution
-    cost = np.sum(chromosome) * max_cost / num_neighborhoods
-    speed = np.sum(chromosome) * min_speed
+def fitness(chromosome):
+    # read problem_config.json file and save in the dictionary
+    with open('problem_config.json') as f:
+        data = json.load(f)
+    tower_construction_cost = data.get('tower_construction_cost')
+    tower_maintanance_cost = data.get('tower_maintanance_cost')
+    user_satisfaction_levels = data.get('user_satisfaction_levels')
+    user_satisfaction_scores = data.get('user_satisfaction_scores')
+    # tow_blocks, tow_pup = calculate_population()
 
-    # Calculate the fitness as a weighted sum of cost and speed
-    fitness = cost_weights * cost + speed_weights * speed
+    fit=0
+    for gen in (chromosome):
+        total=0
+        for block in gen[blocks]:
+            BW_prime=nominal_bandwidth(gen[BW], block, gen[blocks])
+            BW_block=COV(gen[location], block)*BW_prime
+            BW_user=BW_block/dict_neighborhood[block]
 
-    return fitness
+            u_score=0
+            for i in range(len(user_satisfaction_levels)):
+                if BW_user<user_satisfaction_levels[i]:
+                    u_score=user_satisfaction_scores[i]
+                    break
+                if i==2:
+                    u_score=user_satisfaction_scores[3]
+
+            b_score=u_score*dict_neighborhood[block]
+            cost=tower_construction_cost+tower_maintanance_cost*gen[BW]
+
+            total+=(b_score-cost)
+
+        fit+=total
+
+    return fit
 
 
 # Define the genetic operators
@@ -59,24 +128,80 @@ def crossover(parent1, parent2):
     return offspring1, offspring2
 
 
-# Implement the evolutionary algorithm
-population_size = 100
-mutation_rate = 0.01
-num_generations = 100
+def genetic_algorithm(numOfTows):
+    numOfChromosome = 50
+    numOfGenerations = 200
+    chros=[[CreateChromosome(numOfTows), 0, 1] for i in range(numOfChromosome)]
 
-population = [create_chromosome() for i in range(population_size)]
-for generation in range(num_generations):
-    # Evaluate the fitness of the population
-    fitness = [fitness_function(chromosome) for chromosome in population]
+    for chromosome in chros:
+        chromosome[1] = fitness(chromosome[0])
 
-    # Select the parents for the next generation
-    parents_indices = np.random.choice(range(population_size), size=2, replace=False, p=fitness / np.sum(fitness))
-    parent1 = population[parents_indices[0]]
-    parent2 = population[parents_indices[1]]
+    for i in range(numOfGenerations):
+        newGeneration=list()
+        rand=random.choice(range(0,50), k=50)
+        for j in range(int(numOfGenerations/2)):
+            temp1, temp2 = crossover(chros[2*j][0], chros[2*j+1][0])
+            newGeneration.append(temp1)
+            newGeneration.append(temp2)
 
-    # Generate the offspring for the next generation
-    offspring1, offspring2 = crossover(parent1, parent2)
-    offspring1 = mutation(offspring1, mutation_rate)
-    offspring2 = mutation(offspring2, mutation_rate)
+        for newChro in newGeneration:
+            mutation(newChro, 0.1)
 
-    # Replace the least fit individuals with the offspring
+        for j in range(len(newGeneration)):
+            newFit = fitness(newGeneration[j])
+
+            for k in range(len(chros)):
+                if chros[k][2]>50 or chros[k][1]<newFit:
+                    chros[k]=[newGeneration[j], newFit, 0]
+                    break
+
+        for ch in chros:
+            ch[2]+=1
+
+    total_fit=0
+    for ch in chros:
+        total_fit+=ch[1]
+
+    return chros, total_fit
+
+
+
+
+
+calculate_population()
+
+big_chro=[random.randint(10,100) for i in range(10)]
+
+
+
+
+
+
+
+
+
+
+
+
+
+# # Implement the evolutionary algorithm
+# population_size = 100
+# mutation_rate = 0.01
+# num_generations = 100
+#
+# population = [create_chromosome() for i in range(population_size)]
+# for generation in range(num_generations):
+#     # Evaluate the fitness of the population
+#     fitness = [fitness_function(chromosome) for chromosome in population]
+#
+#     # Select the parents for the next generation
+#     parents_indices = np.random.choice(range(population_size), size=2, replace=False, p=fitness / np.sum(fitness))
+#     parent1 = population[parents_indices[0]]
+#     parent2 = population[parents_indices[1]]
+#
+#     # Generate the offspring for the next generation
+#     offspring1, offspring2 = crossover(parent1, parent2)
+#     offspring1 = mutation(offspring1, mutation_rate)
+#     offspring2 = mutation(offspring2, mutation_rate)
+#
+#     # Replace the least fit individuals with the offspring
