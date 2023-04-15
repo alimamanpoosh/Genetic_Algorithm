@@ -263,8 +263,11 @@ def genetic_algorithm(numOfTows):
 def find_best_city(lower_city, higher_city):
     len_low = len(lower_city[0][0])
     len_high = len(higher_city[0][0])
-    if len_high==len_low:
-        return lower_city
+    if len_high - len_low == 1:
+        if lower_city[1] >= higher_city[1]:
+            return lower_city
+        else:
+            return higher_city
 
     numOfTows=(len_low+len_high)//2
     current_chros, current_fitness = genetic_algorithm(numOfTows)
