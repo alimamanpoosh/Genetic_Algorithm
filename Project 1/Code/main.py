@@ -160,7 +160,7 @@ def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
 
 
 def crossover(chro1, chro2, rate=0.9):
-    crossover_point=rate*len(chro1)
+    crossover_point=int(rate*len(chro1))-1
     child1, child2 = chro1, chro2
     for g1,g2 in child1[crossover_point:], child2[crossover_point:]:
         rate=0.9
@@ -260,12 +260,31 @@ def genetic_algorithm(numOfTows):
     return chros, total_fit
 
 
+def find_best_city(lower_city, higher_city):
+    len_low = len(lower_city[0][0])
+    len_high = len(higher_city[0][0])
+    if len_high==len_low:
+        return lower_city
+
+    numOfTows=(len_low+len_high)//2
+    current_chros, current_fitness = genetic_algorithm(numOfTows)
+
+    if lower_city[1] > higher_city[1]:
+        return find_best_city(lower_city, (current_chros, current_fitness))
+
+    if lower_city[1] <= higher_city[1]:
+        return find_best_city((current_chros, current_fitness), higher_city)
 
 
 
 calculate_population()
 
-big_chro=[random.randint(10,100) for i in range(10)]
+first_city = genetic_algorithm(10)
+second_city = genetic_algorithm(50)
+
+best_city = find_best_city(first_city, second_city)
+
+print(best_city)
 
 
 
@@ -279,24 +298,3 @@ big_chro=[random.randint(10,100) for i in range(10)]
 
 
 
-# # Implement the evolutionary algorithm
-# population_size = 100
-# mutation_rate = 0.01
-# num_generations = 100
-#
-# population = [create_chromosome() for i in range(population_size)]
-# for generation in range(num_generations):
-#     # Evaluate the fitness of the population
-#     fitness = [fitness_function(chromosome) for chromosome in population]
-#
-#     # Select the parents for the next generation
-#     parents_indices = np.random.choice(range(population_size), size=2, replace=False, p=fitness / np.sum(fitness))
-#     parent1 = population[parents_indices[0]]
-#     parent2 = population[parents_indices[1]]
-#
-#     # Generate the offspring for the next generation
-#     offspring1, offspring2 = crossover(parent1, parent2)
-#     offspring1 = mutation(offspring1, mutation_rate)
-#     offspring2 = mutation(offspring2, mutation_rate)
-#
-#     # Replace the least fit individuals with the offspring
