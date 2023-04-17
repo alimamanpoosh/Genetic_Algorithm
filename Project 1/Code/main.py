@@ -36,7 +36,8 @@ def calculate_population():
 # Define the chromosome representation
 def CreateChromosome(NumOfGens):
     chromosome = []
-    n = 400 / NumOfGens
+    n = 400 // NumOfGens
+    rand = random.sample(range(0,400), 400)
     for i in range(NumOfGens):
         gen = dict()
 
@@ -44,7 +45,8 @@ def CreateChromosome(NumOfGens):
         y = random.uniform(0, 400)
         gen[location] = (x, y)
 
-        gen[blocks] = [j for j in range(int(i * (n)), int(n * (i + 1)))]
+
+        gen[blocks] = [j for j in rand[i*n:n*(i+1)]]
 
         population = 0
         for b in gen[blocks]:
