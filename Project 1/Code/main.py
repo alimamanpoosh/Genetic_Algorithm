@@ -1,9 +1,11 @@
 import numpy as np
 import random
 import json
+from operator import itemgetter
 
 # Define the problem parameters
 num_neighborhoods = 400
+first_neighbor_location = (0.5, 0.5)
 min_speed = 0.2  # megabit
 list_speed = [0.2, 1, 3]
 max_cost = 10000  # arbitrary cost limit
@@ -92,8 +94,11 @@ def fitness(chromosome):
     for gen in (chromosome):
         total = 0
         for block in gen[blocks]:
+            block_x = block % 20 + first_neighbor_location[0]
+            block_y = int(block / 20) + first_neighbor_location[1]
+
             BW_prime = nominal_bandwidth(gen[BW], block, gen[blocks])
-            BW_block = COV(gen[location], block) * BW_prime
+            BW_block = COV(gen[location], (block_x, block_y)) * BW_prime
             BW_user = BW_block / dict_neighborhood[block]
 
             u_score = 0
@@ -116,8 +121,13 @@ def fitness(chromosome):
 
 def crossover_Blocks(parent1, parent2, rate=0.9):  # list type
     crossover_point = int(len(parent1) * rate)
-    offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
-    offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    p = random.randint(0,1)
+    if p==0:
+        offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+        offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    else:
+        offspring1 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+        offspring2 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
     return offspring1, offspring2
 
 
@@ -162,16 +172,14 @@ def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
 
 
 def crossover(chro1, chro2, rate=0.9):
-    crossover_point = int(rate * len(chro1))
     child1, child2 = chro1, chro2
-    for g1, g2 in zip(child1[crossover_point:], child2[crossover_point:]):
+    for g1, g2 in zip(child1, child2):
         g1[blocks], g2[blocks] = crossover_Blocks(g1[blocks], g2[blocks], rate)
-        c = int(len(g1) * rate)
-        for i in range(len(g1[blocks][c:])):
+        for i in range(len(g1[blocks])):
             for gen in child1:
                 for b in gen[blocks]:
-                    if b == g1[blocks][i + c]:
-                        g1[blocks][i + c], g2[blocks][i + c] = g2[blocks][i], g1[blocks][i]
+                    if b == g1[blocks][i]:
+                        g1[blocks][i], g2[blocks][i] = g2[blocks][i], g1[blocks][i]
 
         g1[location], g2[location] = crossover_tower(g1[location], g2[location])
 
@@ -232,11 +240,18 @@ def genetic_algorithm(numOfTows):
     for chromosome in chros:
         chromosome[1] = fitness(chromosome[0])
 
+        crossover_rate=0.9
     for i in range(numOfGenerations):
         newGeneration = list()
-        rand = random.sample(range(0, 50), 50)
-        for j in range(25):
-            temp1, temp2 = crossover(chros[rand[2 * j]][0], chros[rand[2 * j + 1]][0])
+        #rand = random.sample(range(0, 50), 50)
+
+        #sorted(chros, key=itemgetter(1))
+        numOfCrossover = int(crossover_rate*numOfChromosome)
+        if numOfCrossover%2==1:
+            numOfCrossover+=1
+
+        for j in range(int(numOfCrossover/2)):
+            temp1, temp2 = crossover(chros[2*j][0], chros[2*j+1][0])
             newGeneration.append(temp1)
             newGeneration.append(temp2)
 
@@ -249,6 +264,7 @@ def genetic_algorithm(numOfTows):
             for k in range(len(chros)):
                 if chros[k][2] > 50 or chros[k][1] < newFit:
                     chros[k] = [newGeneration[j], newFit, 0]
+                    sorted(chros, key=itemgetter(1), reverse=True)
                     break
 
         for ch in chros:
