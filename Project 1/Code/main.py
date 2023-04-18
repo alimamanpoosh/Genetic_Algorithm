@@ -2,6 +2,8 @@ import numpy as np
 import random
 import json
 from operator import itemgetter
+import copy
+
 
 # Define the problem parameters
 num_neighborhoods = 400
@@ -129,8 +131,8 @@ def fitness(chromosome):
     return fit
 
 
-def crossover_Blocks(parent1, parent2):  # list type
-    crossover_point = int(len(parent1) * crossover_rate)
+def crossover_Blocks(parent1, parent2):
+    crossover_point = int(random.uniform(0,1)*len(parent1))
     p = random.randint(0,1)
     if p==0:
         offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
@@ -181,22 +183,21 @@ def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
                                                                                     parent1 + alpha * d)
 
 
+
 def crossover(chro1, chro2):
-    child1, child2 = chro1, chro2
+    child1, child2 = copy.deepcopy(chro1), copy.deepcopy(chro2)
     for i in range(len(child1)):
         child1[i][blocks], child2[i][blocks] = crossover_Blocks(child1[i][blocks], child2[i][blocks])
         for k in range(len(child1[i][blocks])):
             for gen in child1:
-                for b in gen[blocks]:
-                    if b == child1[i][blocks][k]:
-                        child1[i][blocks][k], child2[i][blocks][k] = child2[i][blocks][k], child1[i][blocks][k]
+                if gen != child1[i]:
+                    for b in gen[blocks]:
+                        if b == child1[i][blocks][k]:
+                            child1[i][blocks][k], child2[i][blocks][k] = child2[i][blocks][k], child1[i][blocks][k]
 
         child1[i][location], child2[i][location] = crossover_tower(child1[i][location], child2[i][location])
 
         child1[i][BW], child2[i][BW] = crossover_BW(child1[i][BW], child2[i][BW])
-
-    if child1 == chro1:
-        print('vay')
 
     return child1, child2
 
