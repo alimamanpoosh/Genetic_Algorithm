@@ -11,7 +11,8 @@ list_speed = [0.2, 1, 3]
 max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
-
+crossover_rate = 0.9
+mutation_rate = 0.1
 totalPopulation = 0
 dict_neighborhood = {}
 
@@ -30,9 +31,10 @@ def calculate_population():
         neighborPopulation.extend(i.split(','))
 
     result = np.array(neighborPopulation, dtype=int)
-    totalPopulation = np.sum(result)
+    global totalPopulation
     for i in range(400):
         dict_neighborhood[i] = result[i]
+        totalPopulation += result[i]
 
 
 # Define the chromosome representation
@@ -43,8 +45,16 @@ def CreateChromosome(NumOfGens):
     for i in range(NumOfGens):
         gen = dict()
 
-        x = random.uniform(0, 400)
-        y = random.uniform(0, 400)
+        if first_neighbor_location[0]==0:
+            x = random.uniform(0, 20)
+        elif first_neighbor_location[0]==0.5:
+            x = random.uniform(0.5, 20.5)
+
+        if first_neighbor_location[0] == 0:
+            y = random.uniform(0, 20)
+        elif first_neighbor_location[0] == 0.5:
+            y = random.uniform(0.5, 20.5)
+
         gen[location] = (x, y)
 
 
@@ -119,8 +129,8 @@ def fitness(chromosome):
     return fit
 
 
-def crossover_Blocks(parent1, parent2, rate=0.9):  # list type
-    crossover_point = int(len(parent1) * rate)
+def crossover_Blocks(parent1, parent2):  # list type
+    crossover_point = int(len(parent1) * crossover_rate)
     p = random.randint(0,1)
     if p==0:
         offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
@@ -171,19 +181,22 @@ def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
                                                                                     parent1 + alpha * d)
 
 
-def crossover(chro1, chro2, rate=0.9):
+def crossover(chro1, chro2):
     child1, child2 = chro1, chro2
-    for g1, g2 in zip(child1, child2):
-        g1[blocks], g2[blocks] = crossover_Blocks(g1[blocks], g2[blocks], rate)
-        for i in range(len(g1[blocks])):
+    for i in range(len(child1)):
+        child1[i][blocks], child2[i][blocks] = crossover_Blocks(child1[i][blocks], child2[i][blocks])
+        for k in range(len(child1[i][blocks])):
             for gen in child1:
                 for b in gen[blocks]:
-                    if b == g1[blocks][i]:
-                        g1[blocks][i], g2[blocks][i] = g2[blocks][i], g1[blocks][i]
+                    if b == child1[i][blocks][k]:
+                        child1[i][blocks][k], child2[i][blocks][k] = child2[i][blocks][k], child1[i][blocks][k]
 
-        g1[location], g2[location] = crossover_tower(g1[location], g2[location])
+        child1[i][location], child2[i][location] = crossover_tower(child1[i][location], child2[i][location])
 
-        g1[BW], g2[BW] = crossover_BW(g1[BW], g2[BW])
+        child1[i][BW], child2[i][BW] = crossover_BW(child1[i][BW], child2[i][BW])
+
+    if child1 == chro1:
+        print('vay')
 
     return child1, child2
 
@@ -221,9 +234,9 @@ def mutation_tower(parent1):
 
 
 # Define the genetic operators
-def mutation(chromosome, mutation_rate=0.1):
+def mutation(chromosome):
     for gen in chromosome:
-        if random.randint(1, 10) == 1:
+        if random.uniform(1, 10) <= mutation_rate * 10:
             rand = random.randint(0, len(chromosome) - 1)
             gen[blocks], chromosome[rand][blocks] = mutation_Blocks(gen[blocks], chromosome[rand][blocks])
 
@@ -240,7 +253,6 @@ def genetic_algorithm(numOfTows):
     for chromosome in chros:
         chromosome[1] = fitness(chromosome[0])
 
-        crossover_rate=0.9
     for i in range(numOfGenerations):
         newGeneration = list()
         #rand = random.sample(range(0, 50), 50)
@@ -256,7 +268,7 @@ def genetic_algorithm(numOfTows):
             newGeneration.append(temp2)
 
         for newChro in newGeneration:
-            mutation(newChro, 0.1)
+            mutation(newChro)
 
         for j in range(len(newGeneration)):
             newFit = fitness(newGeneration[j])
