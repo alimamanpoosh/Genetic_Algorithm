@@ -188,12 +188,18 @@ def crossover(chro1, chro2):
     child1, child2 = copy.deepcopy(chro1), copy.deepcopy(chro2)
     for i in range(len(child1)):
         child1[i][blocks], child2[i][blocks] = crossover_Blocks(child1[i][blocks], child2[i][blocks])
-        for k in range(len(child1[i][blocks])):
-            for gen in child1:
-                if gen != child1[i]:
-                    for b in gen[blocks]:
-                        if b == child1[i][blocks][k]:
-                            child1[i][blocks][k], child2[i][blocks][k] = child2[i][blocks][k], child1[i][blocks][k]
+
+        for j in range(len(child1[i][blocks])):
+            for gen1, gen2 in zip(chro1, chro2):
+                if gen1 is not child1[i]:
+                    if child1[i][blocks][j] in gen1[blocks]:
+                        k = gen1[blocks].index(child1[i][blocks][j])
+                        gen1[blocks][k] = child2[i][blocks][j]
+
+                if gen2 is not child2[i]:
+                    if child2[i][blocks][j] in gen2[blocks]:
+                        k = gen2[blocks].index(child2[i][blocks][j])
+                        gen2[blocks][k] = child1[i][blocks][j]
 
         child1[i][location], child2[i][location] = crossover_tower(child1[i][location], child2[i][location])
 
@@ -213,10 +219,12 @@ def mutation_Blocks(parent1, parent2):  # parent is type list
     rand_P1 = random.randint(0, len(parent1) - 1)
     rand_P2 = random.randint(0, len(parent2) - 1)
 
-    temp = parent1[rand_P1]
+    temp1 = parent1[rand_P1]
     temp2 = parent2[rand_P2]
     parent1[rand_P1] = temp2
-    parent2[rand_P2] = temp
+    parent2[rand_P2] = temp1
+
+    random.shuffle(parent1)
 
     return parent1, parent2
 
