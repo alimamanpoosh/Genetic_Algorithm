@@ -1,4 +1,5 @@
-t=(3,4)
-t[0]+=1
-t[1]-=1
-print(t)
+test = list()
+for i in range(10,51):
+    test.append(400%i)
+
+print(max(test))
