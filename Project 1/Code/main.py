@@ -266,9 +266,6 @@ def genetic_algorithm(num_of_tows):
 
     for i in range(num_of_generations):
         new_generation = list()
-        # rand = random.sample(range(0, 50), 50)
-
-        # sorted(chros, key=itemgetter(1))
         num_of_crossover = int(crossover_rate * num_of_chromosome)
         if num_of_crossover % 2 == 1:
             num_of_crossover -= 1
