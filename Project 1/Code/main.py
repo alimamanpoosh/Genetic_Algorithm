@@ -1,8 +1,8 @@
 import numpy as np
 import random
 import json
-from operator import itemgetter
 import copy
+import time
 
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -99,7 +99,7 @@ def create_chromosome(num_of_gens):
 
         gen[location] = (x, y)
 
-        gen[blocks] = [j for j in range(0, 400)[i * n:n * (i + 1)]]
+        gen[blocks] = [j for j in range(0, n * num_of_gens)[i * n:n * (i + 1)]]
 
         population = 0
         for b in gen[blocks]:
@@ -115,6 +115,9 @@ def nominal_bandwidth(bw_ty, bj, blocks):
     pop = 0
     for b in blocks:
         pop += dict_neighborhood[b]
+
+    if pop == 0:
+        return 0
 
     return dict_neighborhood[bj] * bw_ty / pop
 
@@ -141,7 +144,10 @@ def fitness(chromosome):
 
             bw_prime = nominal_bandwidth(gen[BW], b, gen[blocks])
             bw_block = cov(gen[location], (block_x, block_y)) * bw_prime
-            bw_user = bw_block / dict_neighborhood[b]
+            if dict_neighborhood[b]==0:
+                bw_user = 0
+            else:
+                bw_user = bw_block / dict_neighborhood[b]
 
             u_score = 0
             for i in range(len(user_satisfaction_levels)):
@@ -380,6 +386,8 @@ def find_best_city(lower_city, higher_city):
         return find_best_city(current_chromosome, higher_city)
 
 
+start = time.time()
+
 calculate_population()
 
 first_city = genetic_algorithm(10)
@@ -387,4 +395,7 @@ second_city = genetic_algorithm(40)
 
 best_city = find_best_city(first_city, second_city)
 
+end = time.time()
+
 print(best_city)
+print('exe time: ', end - start)
