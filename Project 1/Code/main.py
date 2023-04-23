@@ -5,7 +5,6 @@ import copy
 import time
 
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
 # Define the problem parameters
 num_neighborhoods = 400
@@ -83,9 +82,12 @@ def create_chromosome(num_of_gens):
     else:
         n = int(400 / num_of_gens)
 
-    # rand = random.sample(range(0, 400), 400)
+    rand = random.sample(range(0, n * num_of_gens), n * num_of_gens)
     for i in range(num_of_gens):
         gen = dict()
+
+        gen[blocks] = [j for j in rand[i * n:n * (i + 1)]]
+
         x = 0
         if first_neighbor_location[0] == 0:
             x = random.uniform(0, 20)
@@ -99,7 +101,6 @@ def create_chromosome(num_of_gens):
 
         gen[location] = (x, y)
 
-        gen[blocks] = [j for j in range(0, n * num_of_gens)[i * n:n * (i + 1)]]
 
         population = 0
         for b in gen[blocks]:
@@ -168,16 +169,18 @@ def fitness(chromosome):
 
 
 def crossover_blocks(parent1, parent2):
-    crossover_point = int(random.uniform(0, 1) * len(parent1))
-    p = random.randint(0, 1)
-    if p == 0:
-        offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
-        offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-    else:
-        offspring1 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-        offspring2 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
 
-    return offspring1.tolist(), offspring2.tolist()
+    return parent2, parent1
+    # crossover_point = int(random.uniform(0, 1) * len(parent1))
+    # p = random.randint(0, 1)
+    # if p == 0:
+    #     offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    #     offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    # else:
+    #     offspring1 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    #     offspring2 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    #
+    # return offspring1.tolist(), offspring2.tolist()
 
 
 def crossover_tower(parent1, parent2, alpha=0.25):  # tuple type
@@ -248,17 +251,23 @@ def crossover(chro1, chro2):
     for i in range(len(child1)):
         child1[i][blocks], child2[i][blocks] = crossover_blocks(child1[i][blocks], child2[i][blocks])
 
-        for j in range(len(child1[i][blocks])):
-            for gen1, gen2 in zip(chro1, chro2):
-                if gen1 is not child1[i]:
-                    if child1[i][blocks][j] in gen1[blocks]:
-                        k = gen1[blocks].index(child1[i][blocks][j])
-                        gen1[blocks][k] = child2[i][blocks][j]
-
-                if gen2 is not child2[i]:
-                    if child2[i][blocks][j] in gen2[blocks]:
-                        k = gen2[blocks].index(child2[i][blocks][j])
-                        gen2[blocks][k] = child1[i][blocks][j]
+        # for j in range(len(child1[i][blocks])):
+        #     for gen1, gen2 in zip(child1, child2):
+        #         if gen1 is not child1[i]:
+        #             if child1[i][blocks][j] in gen1[blocks]:
+        #                 k = gen1[blocks].index(child1[i][blocks][j])
+        #                 gen1[blocks][k] = child2[i][blocks][j]
+        #         elif gen1[blocks].count(child1[i][blocks][j]) > 1:
+        #             k = gen1[blocks].index(child1[i][blocks][j])
+        #             gen1[blocks][k] = child2[i][blocks][j]
+        #
+        #         if gen2 is not child2[i]:
+        #             if child2[i][blocks][j] in gen2[blocks]:
+        #                 k = gen2[blocks].index(child2[i][blocks][j])
+        #                 gen2[blocks][k] = child1[i][blocks][j]
+        #         elif gen2[blocks].count(child2[i][blocks][j]) > 1:
+        #             k = gen2[blocks].index(child2[i][blocks][j])
+        #             gen2[blocks][k] = child1[i][blocks][j]
 
         child1[i][location], child2[i][location] = crossover_tower(child1[i][location], child2[i][location])
 
@@ -282,10 +291,7 @@ def mutation_blocks(parent1, parent2):  # parent is type list
     rand_p1 = random.randint(0, len(parent1) - 1)
     rand_p2 = random.randint(0, len(parent2) - 1)
 
-    temp1 = parent1[rand_p1]
-    temp2 = parent2[rand_p2]
-    parent1[rand_p1] = temp2
-    parent2[rand_p2] = temp1
+    parent1[rand_p1], parent2[rand_p2] = parent2[rand_p2], parent1[rand_p1]
 
     random.shuffle(parent1)
 
@@ -320,6 +326,8 @@ def mutation(chromosome):
 
             gen[BW] = mutation_bw(gen)
 
+    return  chromosome
+
 
 def genetic_algorithm(num_of_tows):
     num_of_chromosome = 50
@@ -343,7 +351,7 @@ def genetic_algorithm(num_of_tows):
             new_generation.append(temp2)
 
         for newChro in new_generation:
-            mutation(newChro)
+            newChro = mutation(newChro)
 
         for j in range(len(new_generation)):
             new_fit = fitness(new_generation[j])
@@ -378,7 +386,7 @@ def find_best_city(lower_city, higher_city):
 
     num_of_tows = int((len_low + len_high) / 2)
     current_chromosome = genetic_algorithm(num_of_tows)
-
+    print(len(current_chromosome[0]), current_chromosome[1])
     if lower_city[1] >= higher_city[1]:
         return find_best_city(lower_city, current_chromosome)
 
@@ -390,12 +398,13 @@ start = time.time()
 
 calculate_population()
 
-first_city = genetic_algorithm(10)
-second_city = genetic_algorithm(40)
-
+first_city = genetic_algorithm(5)
+print(len(first_city[0]), first_city[1])
+second_city = genetic_algorithm(55)
+print(len(second_city[0]), second_city[1])
 best_city = find_best_city(first_city, second_city)
 
-end = time.time()
-
 print(best_city)
-print('exe time: ', end - start)
+
+end = time.time()
+print('exe time: ', (end - start)/60)
