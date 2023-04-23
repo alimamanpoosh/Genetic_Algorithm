@@ -101,7 +101,6 @@ def create_chromosome(num_of_gens):
 
         gen[location] = (x, y)
 
-
         population = 0
         for b in gen[blocks]:
             population += dict_neighborhood[b]
@@ -145,7 +144,7 @@ def fitness(chromosome):
 
             bw_prime = nominal_bandwidth(gen[BW], b, gen[blocks])
             bw_block = cov(gen[location], (block_x, block_y)) * bw_prime
-            if dict_neighborhood[b]==0:
+            if dict_neighborhood[b] == 0:
                 bw_user = 0
             else:
                 bw_user = bw_block / dict_neighborhood[b]
@@ -159,17 +158,16 @@ def fitness(chromosome):
                     u_score = user_satisfaction_scores[3]
 
             b_score = u_score * dict_neighborhood[b]
-            cost = tower_construction_cost + tower_maintanance_cost * gen[BW]
+            total += b_score
 
-            total += (b_score - cost)
+        cost = tower_construction_cost + tower_maintanance_cost * gen[BW]
 
-        fit += total
+        fit += (total - cost)
 
     return fit
 
 
 def crossover_blocks(parent1, parent2):
-
     return parent2, parent1
     # crossover_point = int(random.uniform(0, 1) * len(parent1))
     # p = random.randint(0, 1)
@@ -326,7 +324,7 @@ def mutation(chromosome):
 
             gen[BW] = mutation_bw(gen)
 
-    return  chromosome
+    return chromosome
 
 
 def genetic_algorithm(num_of_tows):
@@ -407,4 +405,4 @@ best_city = find_best_city(first_city, second_city)
 print(best_city)
 
 end = time.time()
-print('exe time: ', (end - start)/60)
+print('exe time: ', (end - start) / 60)
