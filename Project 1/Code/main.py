@@ -15,7 +15,7 @@ max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
 crossover_rate = 0.9
-mutation_rate = 0.1
+mutation_rate = 0.9
 totalPopulation = 0
 dict_neighborhood = {}
 smallest_neighborhood = 0
@@ -360,10 +360,14 @@ def genetic_algorithm(num_of_tows):
                     chros.sort(key=lambda x: x[1])
                     break
 
+        mean = 0
         for ch in chros:
             ch[2] += 1
+            mean+=ch[1]
 
-        chart_fitness.append(chros[-1][1])
+        mean/=num_of_chromosome
+        chart_fitness.append(mean)
+        # chart_fitness.append(chros[-1][1])
 
     best_chromosome = chros[-1]
 
@@ -392,17 +396,17 @@ def find_best_city(lower_city, higher_city):
         return find_best_city(current_chromosome, higher_city)
 
 
-start = time.time()
+# start = time.time()
 
 calculate_population()
 
-first_city = genetic_algorithm(5)
+first_city = genetic_algorithm(10) # 5
 print(len(first_city[0]), first_city[1])
-second_city = genetic_algorithm(55)
-print(len(second_city[0]), second_city[1])
-best_city = find_best_city(first_city, second_city)
-
-print(best_city)
-
-end = time.time()
-print('exe time: ', (end - start) / 60)
+# second_city = genetic_algorithm(55)
+# print(len(second_city[0]), second_city[1])
+# best_city = find_best_city(first_city, second_city)
+#
+# print(best_city)
+#
+# end = time.time()
+# print('exe time: ', (end - start) / 60)
