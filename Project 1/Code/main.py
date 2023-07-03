@@ -403,13 +403,12 @@ start = time.time()
 calculate_population()
 
 first_city = genetic_algorithm(5)
-print(len(first_city[0]), first_city[1])
+# print(len(first_city[0]), first_city[1])
 second_city = genetic_algorithm(55)
-print(len(second_city[0]), second_city[1])
+# print(len(second_city[0]), second_city[1])
 best_city = find_best_city(first_city, second_city)
 
 
-print(len(best_city[0]))
 print(best_city)
 
 end = time.time()
