@@ -1,11 +1,10 @@
 import numpy as np
 import random
 import json
-from operator import itemgetter
 import copy
+import time
 
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 
 # Define the problem parameters
 num_neighborhoods = 400
@@ -15,17 +14,19 @@ list_speed = [0.2, 1, 3]
 max_cost = 10000  # arbitrary cost limit
 speed_weights = 0.2
 cost_weights = 0.8
-crossover_rate = 0.9
-mutation_rate = 0.1
+crossover_rate = 0
+mutation_rate = 1
 totalPopulation = 0
 dict_neighborhood = {}
+smallest_neighborhood = 0
+num_of_chromosome = 50
+num_of_generations = 200
 
 location = 'location'
 blocks = 'blocks'
 BW = 'BW'
 totoal_city_list = []
 chart_fitness = []
-
 
 # read problem_config.json file and save in the dictionary
 with open('/content/drive/MyDrive/Colab Notebooks/CI_P1/problem_config.json') as f:
@@ -52,14 +53,43 @@ def calculate_population():
         dict_neighborhood[i] = result[i]
         totalPopulation += result[i]
 
+    global smallest_neighborhood
+    smallest_neighborhood = min(dict_neighborhood.values())
+
+    for i in range(40):   # add dessert blocks to the dictionary ==> population = 0 
+        dict_neighborhood[i + 400] = 0
+
+
+def chart():
+    # Generate x-axis values using range() function
+    x = range(len(chart_fitness))
+
+    # Create line plot
+    plt.plot(x, chart_fitness)
+
+    # Add labels and title
+    plt.xlabel('Index')
+    plt.ylabel('fitness')
+    plt.title('fitness of chromosome')
+
+    # Show the plot
+    plt.show()
+
 
 # Define the chromosome representation
 def create_chromosome(num_of_gens):
     chromosome = []
-    n = 400 // num_of_gens
-    rand = random.sample(range(0, 400), 400)
+    if 400 / num_of_gens > 400 // num_of_gens:
+        n = int(400 / num_of_gens) + 1
+    else:
+        n = int(400 / num_of_gens)
+
+    rand = random.sample(range(0, n * num_of_gens), n * num_of_gens)   # ==> [(0, 5 * 40), 5 * 40]   smaple
     for i in range(num_of_gens):
         gen = dict()
+
+        gen[blocks] = [j for j in rand[i * n:n * (i + 1)]]
+
         x = 0
         if first_neighbor_location[0] == 0:
             x = random.uniform(0, 20)
@@ -72,8 +102,6 @@ def create_chromosome(num_of_gens):
             y = random.uniform(0.5, 20.5)
 
         gen[location] = (x, y)
-
-        gen[blocks] = [j for j in rand[i * n:n * (i + 1)]]
 
         population = 0
         for b in gen[blocks]:
@@ -89,6 +117,9 @@ def nominal_bandwidth(bw_ty, bj, blocks):
     pop = 0
     for b in blocks:
         pop += dict_neighborhood[b]
+
+    if pop == 0:
+        return 0
 
     return dict_neighborhood[bj] * bw_ty / pop
 
@@ -115,7 +146,10 @@ def fitness(chromosome):
 
             bw_prime = nominal_bandwidth(gen[BW], b, gen[blocks])
             bw_block = cov(gen[location], (block_x, block_y)) * bw_prime
-            bw_user = bw_block / dict_neighborhood[b]
+            if dict_neighborhood[b] == 0:
+                bw_user = 0
+            else:
+                bw_user = bw_block / dict_neighborhood[b]
 
             u_score = 0
             for i in range(len(user_satisfaction_levels)):
@@ -126,34 +160,36 @@ def fitness(chromosome):
                     u_score = user_satisfaction_scores[3]
 
             b_score = u_score * dict_neighborhood[b]
-            cost = tower_construction_cost + tower_maintanance_cost * gen[BW]
+            total += b_score
 
-            total += (b_score - cost)
+        cost = tower_construction_cost + tower_maintanance_cost * gen[BW]
 
-        fit += total
+        fit += (total - cost)
 
     return fit
 
 
 def crossover_blocks(parent1, parent2):
-    crossover_point = int(random.uniform(0, 1) * len(parent1))
-    p = random.randint(0, 1)
-    if p == 0:
-        offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
-        offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-    else:
-        offspring1 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
-        offspring2 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    return parent2, parent1   # swap
+    # crossover_point = int(random.uniform(0, 1) * len(parent1))
+    # p = random.randint(0, 1)
+    # if p == 0:
+    #     offspring1 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    #     offspring2 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    # else:
+    #     offspring1 = np.concatenate([parent2[:crossover_point], parent1[crossover_point:]])
+    #     offspring2 = np.concatenate([parent1[:crossover_point], parent2[crossover_point:]])
+    #
+    # return offspring1.tolist(), offspring2.tolist()
 
-    return offspring1.tolist(), offspring2.tolist()
 
-
-def crossover_tower(parent1, parent2, alpha=0.25):  # tuple type
+def crossover_tower(parent1, parent2, alpha=0.25):  # tuple type   (sample crossover)   (20 - 30 )  sub 10 ==> alpha 0.25 ==> (22.5-27.5)
     parent1 = list(parent1)
     parent2 = list(parent2)
-    sub = abs(parent1[0] - parent2[0])
-    amount_of_change_x = alpha * sub
-    amount_of_change_y = alpha * abs(parent1[1] - parent2[1])
+    sub_x = abs(parent1[0] - parent2[0])
+    sub_y = abs(parent1[1] - parent2[1])
+    amount_of_change_x = alpha * sub_x
+    amount_of_change_y = alpha * sub_y
 
     if parent2[0] < parent1[0]:
         parent1[0] -= amount_of_change_x
@@ -175,7 +211,7 @@ def crossover_tower(parent1, parent2, alpha=0.25):  # tuple type
     return offspring1, offspring2
 
 
-def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
+def crossover_bw(parent1, parent2, num_of_blocks, alpha=0.25):  # we use avg replace that  (blend crossover) (20 - 30 )   random (17.5 - 32.5)
     # parent1 ===>  gen 1
     # parent2 ===>  gen 2
 
@@ -187,96 +223,95 @@ def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
     result2 = random.uniform(parent2 - alpha * d, parent1 + alpha * d)
     result3 = random.uniform(parent2 - alpha * d, parent1 + alpha * d)
 
-    
+    minimum = smallest_neighborhood * min_speed * num_of_blocks
+
     if parent2 > parent1:
-        if result0 < 0 and result1 < 0:
-            return (72, 72)
-        elif result0< 0 and result1 > 0:
-            return (72, result1)
-        elif result0 > 0 and result1 < 0:
-            return (result0, 72)
+        if result0 < minimum and result1 < minimum:
+            return (minimum, minimum)
+        elif result0 < minimum and result1 > minimum:
+            return (minimum, result1)
+        elif result0 > minimum and result1 < minimum:
+            return (result0, minimum)
         else:
             return (result0, result1)
         # return random.uniform(parent1 - alpha * d, parent2 + alpha * d), random.uniform(parent1 - alpha * d, parent2 + alpha * d)
     else:
-        if result2 < 0 and result3 < 0:
-            return (72, 72)
-        elif result2 < 0 and result3 > 0:
-            return (72, result3)
-        elif result2 > 0 and result3 < 0:
-            return (result2, 72)
+        if result2 < minimum and result3 < minimum:
+            return (minimum, minimum)
+        elif result2 < minimum and result3 > minimum:
+            return (minimum, result3)
+        elif result2 > minimum and result3 < minimum:
+            return (result2, minimum)
         else:
             return (result2, result3)
 
-# def crossover_BW(parent1, parent2, alpha=0.25):  # we use avg replace that
-#     # parent1 ===>  gen 1
-#     # parent2 ===>  gen 2
-
-#     # """Perform crossover blend on two decimal numbers."""
-#     d = abs(parent1 - parent2)
-#     if parent2 > parent1:
-#         return random.uniform(parent1 - alpha * d, parent2 + alpha * d), random.uniform(parent1 - alpha * d,
-#                                                                                         parent2 + alpha * d)
-#     return random.uniform(parent2 - alpha * d, parent1 + alpha * d), random.uniform(parent2 - alpha * d,
-#                                                                                     parent1 + alpha * d)
 
 def crossover(chro1, chro2):
     child1, child2 = copy.deepcopy(chro1), copy.deepcopy(chro2)
     for i in range(len(child1)):
         child1[i][blocks], child2[i][blocks] = crossover_blocks(child1[i][blocks], child2[i][blocks])
 
-        for j in range(len(child1[i][blocks])):
-            for gen1, gen2 in zip(chro1, chro2):
-                if gen1 is not child1[i]:
-                    if child1[i][blocks][j] in gen1[blocks]:
-                        gen1[blocks] = list(gen1[blocks])
-                        k = gen1[blocks].index(child1[i][blocks][j])
-                        gen1[blocks][k] = child2[i][blocks][j]
-
-                if gen2 is not child2[i]:
-                    if child2[i][blocks][j] in gen2[blocks]:
-                        gen2[blocks] = list(gen2[blocks])
-                        k = gen2[blocks].index(child2[i][blocks][j])
-                        gen2[blocks][k] = child1[i][blocks][j]
+        # for j in range(len(child1[i][blocks])):
+        #     for gen1, gen2 in zip(child1, child2):
+        #         if gen1 is not child1[i]:
+        #             if child1[i][blocks][j] in gen1[blocks]:
+        #                 k = gen1[blocks].index(child1[i][blocks][j])
+        #                 gen1[blocks][k] = child2[i][blocks][j]
+        #         elif gen1[blocks].count(child1[i][blocks][j]) > 1:
+        #             k = gen1[blocks].index(child1[i][blocks][j])
+        #             gen1[blocks][k] = child2[i][blocks][j]
+        #
+        #         if gen2 is not child2[i]:
+        #             if child2[i][blocks][j] in gen2[blocks]:
+        #                 k = gen2[blocks].index(child2[i][blocks][j])
+        #                 gen2[blocks][k] = child1[i][blocks][j]
+        #         elif gen2[blocks].count(child2[i][blocks][j]) > 1:
+        #             k = gen2[blocks].index(child2[i][blocks][j])
+        #             gen2[blocks][k] = child1[i][blocks][j]
 
         child1[i][location], child2[i][location] = crossover_tower(child1[i][location], child2[i][location])
 
-        child1[i][BW], child2[i][BW] = crossover_BW(child1[i][BW], child2[i][BW])
+        child1[i][BW], child2[i][BW] = crossover_bw(child1[i][BW], child2[i][BW], len(child1[i][blocks]))
 
     return child1, child2
 
 
-def mutation_bw(parent1):  # parent decimal number
-    multi_neighborhood_population = sum([dict_neighborhood.get(key) for key in parent1[blocks]])
-    sub = abs(list_speed[-1] * multi_neighborhood_population - min_speed * multi_neighborhood_population)
+def mutation_bw(parent):  # parent decimal number   # uniform  mutation ==> Lower ==> Bw -Sub *Alpha    Uper = Bw + Sub*alpha
+    multi_neighborhood_population = sum([dict_neighborhood.get(key) for key in parent[blocks]])
+    sub = list_speed[-1] * multi_neighborhood_population - min_speed * multi_neighborhood_population  
     alpha = 0.25
-    return random.uniform(abs(parent1[BW] - alpha * sub), parent1[BW] + alpha * sub)
+    minimum = smallest_neighborhood * min_speed * len(parent[blocks])
+    if parent[BW] - alpha * sub < minimum:
+        return random.uniform(minimum, parent[BW] + alpha * sub)
+
+    return random.uniform(parent[BW] - alpha * sub, parent[BW] + alpha * sub)
 
 
 def mutation_blocks(parent1, parent2):  # parent is type list
     rand_p1 = random.randint(0, len(parent1) - 1)
     rand_p2 = random.randint(0, len(parent2) - 1)
 
-    temp1 = parent1[rand_p1]
-    temp2 = parent2[rand_p2]
-    parent1[rand_p1] = temp2
-    parent2[rand_p2] = temp1
+    parent1[rand_p1], parent2[rand_p2] = parent2[rand_p2], parent1[rand_p1]
 
     random.shuffle(parent1)
 
     return parent1, parent2
 
 
-def mutation_tower(parent1):
+def mutation_tower(parent1):   # like BW
+    if first_neighbor_location == (0.5, 0.5):
+        minimun, maximum = (0.5, 20.5)
+    else:
+        minimun, maximum = (0, 20)
     newx, newy = random.uniform(parent1[0] - 1, parent1[0] + 1), random.uniform(parent1[1] - 1, parent1[1] + 1)
-    if newx < 0:
-        newx = 0
-    elif newx > 20:
-        newx = 20
-    if newy < 0:
-        newy = 0
-    elif newy > 20:
-        newy = 20
+    if newx < minimun:
+        newx = minimun
+    elif newx > maximum:
+        newx = maximum
+    if newy < minimun:
+        newy = minimun
+    elif newy > maximum:
+        newy = maximum
     return (newx, newy)
 
 
@@ -290,89 +325,72 @@ def mutation(chromosome):
             gen[location] = mutation_tower(gen[location])
 
             gen[BW] = mutation_bw(gen)
-def chart():
-    # Generate x-axis values using range() function
-    x = range(len(chart_fitness))
 
-    # Create line plot
-    plt.plot(x, chart_fitness)
-
-    # Add labels and title
-    plt.xlabel('Index')
-    plt.ylabel('fitness')
-    plt.title('fitness of chromosome')
-
-    # Show the plot
-    plt.show()
+    return chromosome
 
 
 def genetic_algorithm(num_of_tows):
-    num_of_chromosome = 50
-    num_of_generations = 200
+    
     chros = [[create_chromosome(num_of_tows), 0, 1] for i in range(num_of_chromosome)]
 
     for chromosome in chros:
         chromosome[1] = fitness(chromosome[0])
 
-    sorted(chros, key=itemgetter(1))
+    chros.sort(key=lambda x: x[1])
 
     for i in range(num_of_generations):
         new_generation = list()
-        # rand = random.sample(range(0, 50), 50)
-
-        # sorted(chros, key=itemgetter(1))
         num_of_crossover = int(crossover_rate * num_of_chromosome)
         if num_of_crossover % 2 == 1:
-            num_of_crossover -= 1
+            num_of_crossover += 1
 
-        for j in range(int(num_of_crossover / 2)):
-            temp1, temp2 = crossover(chros[2 * j][0], chros[2 * j + 1][0])
+        for j in range(int(num_of_crossover / 2), -1, -1):
+            temp1, temp2 = crossover(chros[len(chros)- 2 * j - 1][0], chros[len(chros) - (2 * j + 1) -1][0])
             new_generation.append(temp1)
             new_generation.append(temp2)
 
         for newChro in new_generation:
-            mutation(newChro)
+            newChro = mutation(newChro)
 
         for j in range(len(new_generation)):
             new_fit = fitness(new_generation[j])
 
             for k in range(len(chros)):
-                if chros[k][2] > 15 or chros[k][1] < new_fit:
+                if chros[k][2] > 20 or chros[k][1] < new_fit:
                     chros[k] = [new_generation[j], new_fit, 0]
-                    sorted(chros, key=itemgetter(1))
+                    chros.sort(key=lambda x: x[1])
                     break
-        
-        # chart_fitness.append(chros[0][1])
-        chart_fitness.append(chros[0][1])
+
+        mean = 0
         for ch in chros:
             ch[2] += 1
+            mean+=ch[1]
+
+        mean/=num_of_chromosome
+        chart_fitness.append(mean)
+
+        # chart_fitness.append(chros[-1][1])
+
+    best_chromosome = chros[-1]
+
     chart()
     chart_fitness.clear()
-    best_chromosome = max(chros, key=itemgetter(1))
 
     return best_chromosome
 
 
 def find_best_city(lower_city, higher_city):
-
-    totoal_city_list.append(lower_city)
-    totoal_city_list.append(higher_city)
-    
     len_low = len(lower_city[0])
     len_high = len(higher_city[0])
     if len_high - len_low == 1:
         if lower_city[1] >= higher_city[1]:
-
             return lower_city
-
         else:
             return higher_city
 
     num_of_tows = int((len_low + len_high) / 2)
     current_chromosome = genetic_algorithm(num_of_tows)
-    # chart_fitness.append(current_chromosome[1])
-    totoal_city_list.append(current_chromosome)
-
+    print(len(current_chromosome[0]), current_chromosome[1])
     if lower_city[1] >= higher_city[1]:
         return find_best_city(lower_city, current_chromosome)
 
@@ -380,14 +398,19 @@ def find_best_city(lower_city, higher_city):
         return find_best_city(current_chromosome, higher_city)
 
 
+start = time.time()
+
 calculate_population()
 
-first_city = genetic_algorithm(10)
-second_city = genetic_algorithm(50)
-
+first_city = genetic_algorithm(5)
+print(len(first_city[0]), first_city[1])
+second_city = genetic_algorithm(55)
+print(len(second_city[0]), second_city[1])
 best_city = find_best_city(first_city, second_city)
 
+
+print(len(best_city[0]))
 print(best_city)
 
-
-
+end = time.time()
+print('exe time: ', (end - start) / 60)
